@@ -1,0 +1,17 @@
+{
+	"userName" : "myprintdeamon@gmail.com",
+	"passwd": "ANewBeginning",
+	"protocol": "imap",
+	"host":"imap.gmail.com",
+	"timeBetweenChecks": "5",
+	"whiteList" : [
+		"marco.divincenzo@hotmail.it",
+		"marco.divincenzo@tiscali.it",
+		"marco.divincenzo@studio.unibo.it",
+		"vattelapesca30@gmail.com",
+		"fulvio.divincenzo@camilliani.net",
+		"fulvio.divincenzo@gmail.com",
+		"silvia.divincenzo@sns.it",
+		"silvia.divincenzo@tiscali.it"
+	]
+}
