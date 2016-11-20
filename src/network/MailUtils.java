@@ -1,4 +1,4 @@
-package network.mail;
+package network;
 import javax.mail.*;
 import javax.mail.Flags.Flag;
 import javax.mail.internet.MimeBodyPart;
@@ -14,7 +14,38 @@ public class MailUtils
 {
 	private static final String basedir = "/tmp/";
 	private static final List<String> whiteList=Utils.getIstance().getWhiteList();
+	private Folder folder;
+	private Store store;
 	
+	public MailUtils(String protocol, String host, String user, String password) throws MessagingException
+	{
+		Properties properties = new Properties();
+        properties.put("mail.store.protocol", protocol);
+        properties.put("mail."+protocol+".host", host);
+        //properties.put("mail."+protocol+".port", "995");
+        properties.put("mail."+protocol+".starttls.enable", "true");
+        
+        Session emailSession = Session.getDefaultInstance(properties);
+        // emailSession.setDebug(true);
+     
+		store = emailSession.getStore(protocol+"s");
+		store.connect(host, user, password);
+		folder = store.getFolder("INBOX");
+        folder.open(Folder.READ_WRITE);
+
+	
+	}
+	
+	public void close()
+	{
+		try
+		{
+			store.close();
+			folder.close(false);
+		} catch (MessagingException e) {
+		}
+		
+	}
 	
 	private static String senderAddress(Message m) throws MessagingException
 	{
@@ -30,119 +61,26 @@ public class MailUtils
 		
 		return accepted; 
 	}
-	public static List<Message> fetch(String host, String storeType, String user, String password) {
-	   switch (storeType)
-	   {
-	   case "pop3": return fetchPOP3(host, user, password);
-	   case "imap": return fetchIMAP(host, user, password);
-		   default : return new LinkedList<Message>();
-		   }
-	   }
-   
-	private static List<Message> fetchPOP3(String host, String user, String password)
-   {
-      try {
-         // create properties field
-         Properties properties = new Properties();
-         properties.put("mail.store.protocol", "pop3");
-         properties.put("mail.pop3.host", host);
-         properties.put("mail.pop3.port", "995");
-         properties.put("mail.pop3.starttls.enable", "true");
-         Session emailSession = Session.getDefaultInstance(properties);
-         // emailSession.setDebug(true);
-
-         // create the POP3 store object and connect with the pop server
-         Store store = emailSession.getStore("pop3s");
-
-         store.connect(host, user, password);
-
-         // create the folder object and open it
-         Folder emailFolder = store.getFolder("INBOX");
-         emailFolder.open(Folder.READ_ONLY);
-
-         // retrieve the messages from the folder in an array and print it
-         Message[] messages = emailFolder.getMessages();
+	public List<Message> fetch() throws MessagingException {
+		
+	        
+         Message[] messages = folder.getMessages();
          List<Message> res = new LinkedList<Message>();
          for (int i=0; i< messages.length; i++)
          {
         	 if (filter(messages[i]))
         	 {
         		 res.add(messages[i]);
-        		 System.out.println(messages[i].getSubject());
+        		 //System.out.println(messages[i].getSubject());
         	 }
          }
          Flags f = new Flags (Flags.Flag.SEEN);
-         emailFolder.setFlags(messages, f, true);
-
-         // close the store and folder objects
-         emailFolder.close(false);
-         store.close();
-         
+         folder.setFlags(messages, f, true);
          return res;
-
-      } catch (NoSuchProviderException e) {
-         e.printStackTrace();
-      } catch (MessagingException e) {
-         e.printStackTrace();
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
-      return new LinkedList<Message>();
-   }
-   
-   
-   private static List<Message> fetchIMAP(String imapHost, String user, String password) {
-	      try {
-	         // create properties field
-	         Properties properties = new Properties();
-	         properties.put("mail.store.protocol", "imap");
-	         /*properties.put("mail.pop3.host", imapHost);
-	         properties.put("mail.pop3.port", "995");
-	         properties.put("mail.pop3.starttls.enable", "true");*/
-	         Session emailSession = Session.getDefaultInstance(properties);
-	         // emailSession.setDebug(true);
-
-	         // create the POP3 store object and connect with the pop server
-	         Store store = emailSession.getStore("imaps");
-
-	         store.connect(imapHost, user, password);
-
-	         // create the folder object and open it
-	         Folder emailFolder = store.getFolder("INBOX");
-	         emailFolder.open(Folder.READ_WRITE);
-
-	         // retrieve the messages from the folder in an array and print it
-	         Message[] messages = emailFolder.getMessages();
-	         List<Message> res = new LinkedList<Message>();
-	         for (int i=0; i< messages.length; i++)
-	         {
-	        	 if (filter(messages[i]))
-	        	 {
-	        		 res.add(messages[i]);
-	        		 //System.out.println(messages[i].getSubject());
-	        	 }
-	         }
-	         Flags f = new Flags (Flags.Flag.SEEN);
-	         emailFolder.setFlags(messages, f, true);
-
-	         // close the store and folder objects
-	         emailFolder.close(false);
-	         store.close();
-	         
-	         return res;
-
-	      } catch (NoSuchProviderException e) {
-	         e.printStackTrace();
-	      } catch (MessagingException e) {
-	         e.printStackTrace();
-	      } catch (Exception e) {
-	         e.printStackTrace();
-	      }
-	      return new LinkedList<Message>();
-	   }
-  
-   public static List<File> getAttachments(List<Message> m) throws IOException, MessagingException
-   {
+	}
+	
+	public static List<File> getAttachments(List<Message> m) throws IOException, MessagingException
+	{
 	   List<File> attachments = new ArrayList<File>();
 	   for (Message message : m) {
 	       Multipart multipart = (Multipart) message.getContent();

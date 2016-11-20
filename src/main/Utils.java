@@ -69,4 +69,9 @@ public class Utils {
 		return istance;
 	}
 	
+	public static void log(String s, String tag)
+	{
+		System.out.println("["+tag.toUpperCase()+"]\t"+s);
+	}
+	
 }
